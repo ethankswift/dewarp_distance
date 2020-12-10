@@ -1,6 +1,7 @@
 import numpy as np
 import cv2 as cv
 import glob
+import yaml
 
 # Termination criteria for the cornerSubPix function
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -41,7 +42,7 @@ for fname in images:
     if retval == True:
         objpoints.append(objp)
         corners2 = cv.cornerSubPix(gray,corners, (11,11), (-1,-1), criteria)
-        imgpoints.append(corners)
+        imgpoints.append(corners2)
         # Draw and display the corners
         cv.drawChessboardCorners(img, (7,7), corners2, retval)
         cv.imshow('image', img)
@@ -57,9 +58,9 @@ img = cv.imread(images[6])
 h,  w = img.shape[:2]
 newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
 
-# undistort
+# Running undistort with the matrix generated
 dst = cv.undistort(img, mtx, dist, None, newcameramtx)
-# crop the image
+# Cropping new image
 x, y, w, h = roi
 dst = dst[y:y+h, x:x+w]
 cv.imshow('image', img)
@@ -68,3 +69,10 @@ cv.imshow('image', dst)
 cv.waitKey(0)
 
 cv.destroyAllWindows()
+
+# Prepare to output to file
+data = {'camera_matrix': np.asarray(mtx).tolist(),
+        'dist_coeff': np.asarray(dist).tolist()}
+
+# Write to file
+yaml.dump(data, open("calibration_matrix.yaml", "w"))
